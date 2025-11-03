@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>REX SCAN Report - {{ data.target }}</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+    h1 { 
+      color: #667eea; 
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #764ba2;
+      margin-top: 30px;
+      border-left: 4px solid #764ba2;
+      padding-left: 10px;
+    }
+    .meta {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .host { 
+      margin-bottom: 25px; 
+      padding: 15px; 
+      border: 2px solid #e9ecef;
+      border-radius: 5px;
+      background: #f8f9fa;
+    }
+    .port { 
+      font-family: 'Courier New', monospace; 
+      background: white;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-left: 3px solid #667eea;
+      border-radius: 3px;
+    }
+    .exploit {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      background: #fff3cd;
+      padding: 5px;
+      margin: 3px 0;
+      border-radius: 3px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .badge-open { background: #d4edda; color: #155724; }
+    .badge-closed { background: #f8d7da; color: #721c24; }
+    .badge-filtered { background: #fff3cd; color: #856404; }
+    
+    .creds-grid {
+      display: grid;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .cred-card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-left: 4px solid #28a745;
+    }
+    .cred-card.failed {
+      border-left-color: #dc3545;
+      opacity: 0.7;
+    }
+    .cred-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .cred-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    .cred-status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .cred-status.failed {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .cred-service {
+      font-weight: bold;
+      color: #667eea;
+      font-size: 1.1em;
+    }
+    .cred-details {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .cred-label {
+      font-weight: bold;
+      color: #764ba2;
+    }
+    .cred-value {
+      color: #333;
+    }
+    .creds-section-header {
+      background: #d4edda;
+      color: #155724;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      border-left: 4px solid #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 REX SCAN Report</h1>
+    
+    <div class="meta">
+      <strong>Target:</strong> {{ data.target }}<br>
+      <strong>Scan Time:</strong> {{ data.timestamp }}<br>
+      <strong>Total Hosts:</strong> {{ data.nmap.hosts|length }}
+    </div>
+
+    {% if data.charts %}
+    <h2>📊 Visual Analytics</h2>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+        {% if data.charts.port_distribution %}
+        <div style="text-align: center;">
+          <h3 style="color: #667eea; font-size: 1.1em;">Port Distribution</h3>
+          <img src="data:image/png;base64,{{ data.charts.port_distribution_base64 }}" 
+               style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+               alt="Port Distribution Chart">
+        </div>
+        {% endif %}
+        
+        {% if data.charts.vulnerability_severity %}
+        <div style="text-align: center;">
+          <h3 style="color: #667eea; font-size: 1.1em;">Vulnerability Severity</h3>
+          <img src="data:image/png;base64,{{ data.charts.vulnerability_severity_base64 }}" 
+               style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+               alt="Vulnerability Severity Chart">
+        </div>
+        {% endif %}
+        
+        {% if data.charts.credential_success %}
+        <div style="text-align: center;">
+          <h3 style="color: #667eea; font-size: 1.1em;">Credential Testing</h3>
+          <img src="data:image/png;base64,{{ data.charts.credential_success_base64 }}" 
+               style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+               alt="Credential Success Chart">
+        </div>
+        {% endif %}
+      </div>
+      
+      {% if data.charts.network_topology %}
+      <div style="margin-top: 20px;">
+        <h3 style="color: #667eea; text-align: center;">Interactive Network Topology</h3>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 5px;">
+          <a href="charts/network_topology.html" target="_blank" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            🌐 Open Interactive Network Map
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <h2>📡 Network Scan Results</h2>
+    {% for host in data.nmap.hosts %}
+    <div class="host">
+      <h3>
+        Host: {{ host.addresses[0].addr if host.addresses else 'Unknown' }}
+        {% if host.hostnames %}
+          ({{ host.hostnames|join(', ') }})
+        {% endif %}
+      </h3>
+      
+      {% if host.ports %}
+        <p><strong>Open Ports: {{ host.ports|length }}</strong></p>
+        {% for port in host.ports %}
+          <div class="port">
+            <span class="badge badge-{{ port.state }}">{{ port.state|upper }}</span>
+            <strong>{{ port.portid or port.port }}/{{ port.protocol or 'tcp' }}</strong>
+            {% if port.service %}
+              - {{ port.service.name or '' }}
+              {% if port.service.product %}
+                {{ port.service.product }}
+              {% endif %}
+              {% if port.service.version %}
+                v{{ port.service.version }}
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p><em>No open ports detected</em></p>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if data.exploits and data.exploits|length > 2 %}
+    <h2>💣 Exploit Database Matches</h2>
+    
+    <div style="background: #fff3cd; border-left: 4px solid #ff6b6b; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+      <strong>⚠️ Found {{ data.exploits|length - 2 }} potential exploits in ExploitDB</strong>
+      <div style="margin-top: 5px; font-size: 0.9em; color: #856404;">
+        Review these carefully - they indicate publicly known vulnerabilities with available exploit code.
+      </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; font-size: 0.9em;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white;">
+            <th style="padding: 12px; text-align: left; font-weight: bold;">Exploit Title</th>
+            <th style="padding: 12px; text-align: left; font-weight: bold; width: 200px;">Path/Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in data.exploits %}
+            {% if line and '|' in line and 'Exploit Title' not in line and 'Shellcodes' not in line and '---' not in line %}
+              {% set parts = line.split('|') %}
+              {% if parts|length >= 2 %}
+              <tr style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" onmouseover="this.style.background='#fff3cd'" onmouseout="this.style.background='white'">
+                <td style="padding: 10px;">
+                  <div style="font-weight: 500; color: #333;">{{ parts[0].strip() }}</div>
+                </td>
+                <td style="padding: 10px;">
+                  <code style="background: #f8f9fa; padding: 4px 8px; border-radius: 3px; font-size: 0.85em; color: #e83e8c;">
+                    {{ parts[1].strip() }}
+                  </code>
+                </td>
+              </tr>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px; font-size: 0.9em;">
+      <strong>💡 Tip:</strong> Use <code style="background: white; padding: 2px 6px; border-radius: 3px;">searchsploit -m &lt;path&gt;</code> to download exploit code locally for testing.
+    </div>
+    {% endif %}
+
+    {% if data.vulnerabilities and data.vulnerabilities.services_with_cves and data.vulnerabilities.services_with_cves|length > 0 %}
+    <h2>🛡️ Vulnerability Analysis</h2>
+    
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+      <strong>Summary:</strong> Found {{ data.vulnerabilities.total_cves_found }} CVEs across {{ data.vulnerabilities.services_with_cves|length }} vulnerable services<br>
+      <div style="margin-top: 10px;">
+        <span style="display: inline-block; margin-right: 15px;">🔴 {{ data.vulnerabilities.critical_severity_count }} CRITICAL</span>
+        <span style="display: inline-block; margin-right: 15px;">🟠 {{ data.vulnerabilities.high_severity_count }} HIGH</span>
+      </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <th style="padding: 15px; text-align: left; font-weight: bold;">Service</th>
+            <th style="padding: 15px; text-align: left; font-weight: bold;">CVE ID</th>
+            <th style="padding: 15px; text-align: left; font-weight: bold;">Severity</th>
+            <th style="padding: 15px; text-align: left; font-weight: bold;">CVSS</th>
+            <th style="padding: 15px; text-align: left; font-weight: bold;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in data.vulnerabilities.services_with_cves %}
+            {% for cve in service.cves %}
+            <tr style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+              <td style="padding: 12px; vertical-align: top;">
+                <div style="font-weight: bold; color: #764ba2;">{{ service.product }}</div>
+                <div style="font-size: 0.85em; color: #6c757d; font-family: 'Courier New', monospace;">
+                  {{ service.version }}<br>
+                  {{ service.host }}:{{ service.port }}
+                </div>
+              </td>
+              <td style="padding: 12px; vertical-align: top;">
+                <a href="{{ cve.url }}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold; font-family: 'Courier New', monospace;">
+                  {{ cve.cve_id }}
+                </a>
+                <div style="font-size: 0.75em; color: #6c757d; margin-top: 4px;">
+                  {{ cve.published[:10] if cve.published else 'N/A' }}
+                </div>
+              </td>
+              <td style="padding: 12px; vertical-align: top;">
+                {% if cve.severity == 'CRITICAL' %}
+                  <span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">🔴 CRITICAL</span>
+                {% elif cve.severity == 'HIGH' %}
+                  <span style="background: #fd7e14; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">🟠 HIGH</span>
+                {% elif cve.severity == 'MEDIUM' %}
+                  <span style="background: #ffc107; color: #333; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">🟡 MEDIUM</span>
+                {% elif cve.severity == 'LOW' %}
+                  <span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">🟢 LOW</span>
+                {% else %}
+                  <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">⚪ {{ cve.severity|upper if cve.severity else 'UNKNOWN' }}</span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px; text-align: center; vertical-align: top;">
+                {% if cve.cvss_score %}
+                  <div style="display: inline-block; background: {% if cve.cvss_score >= 9.0 %}#dc3545{% elif cve.cvss_score >= 7.0 %}#fd7e14{% elif cve.cvss_score >= 4.0 %}#ffc107{% else %}#28a745{% endif %}; color: white; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 1.1em;">
+                    {{ cve.cvss_score }}
+                  </div>
+                {% else %}
+                  <span style="color: #6c757d;">N/A</span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px; max-width: 400px; vertical-align: top;">
+                <div style="line-height: 1.5;">{{ cve.description[:300] }}{% if cve.description|length > 300 %}...{% endif %}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if data.credentials and data.credentials|length > 0 %}
+    <h2>🔑 Credential Check Results</h2>
+    
+    {% set successful_creds = [] %}
+    {% set failed_creds = [] %}
+    {% for cred in data.credentials %}
+      {% if cred is mapping %}
+        {% if cred.success %}
+          {% set _ = successful_creds.append(cred) %}
+        {% else %}
+          {% set _ = failed_creds.append(cred) %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    
+    {% if successful_creds|length > 0 %}
+    <div class="creds-section-header">
+      ✓ SUCCESSFUL LOGINS ({{ successful_creds|length }})
+    </div>
+    <div class="creds-grid">
+      {% for cred in successful_creds %}
+      <div class="cred-card">
+        <div class="cred-header">
+          <span class="cred-status success">✓ SUCCESS</span>
+          <span class="cred-service">{{ cred.service|upper }}</span>
+        </div>
+        <div class="cred-details">
+          <span class="cred-label">Host:</span>
+          <span class="cred-value">{{ cred.host }}</span>
+          
+          <span class="cred-label">Port:</span>
+          <span class="cred-value">{{ cred.port }}</span>
+          
+          <span class="cred-label">Username:</span>
+          <span class="cred-value">{{ cred.username }}</span>
+          
+          <span class="cred-label">Password:</span>
+          <span class="cred-value">{{ cred.password }}</span>
+          
+          {% if cred.details %}
+          <span class="cred-label">Details:</span>
+          <span class="cred-value">{{ cred.details }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if failed_creds|length > 0 %}
+    <div class="creds-section-header" style="background: #f8d7da; color: #721c24; border-left-color: #dc3545; margin-top: 25px;">
+      ✗ FAILED ATTEMPTS ({{ failed_creds|length }})
+    </div>
+    <div class="creds-grid">
+      {% for cred in failed_creds %}
+      <div class="cred-card failed">
+        <div class="cred-header">
+          <span class="cred-status failed">✗ FAILED</span>
+          <span class="cred-service">{{ cred.service|upper }}</span>
+        </div>
+        <div class="cred-details">
+          <span class="cred-label">Host:</span>
+          <span class="cred-value">{{ cred.host }}</span>
+          
+          <span class="cred-label">Port:</span>
+          <span class="cred-value">{{ cred.port }}</span>
+          
+          <span class="cred-label">Username:</span>
+          <span class="cred-value">{{ cred.username }}</span>
+          
+          <span class="cred-label">Password:</span>
+          <span class="cred-value">{{ cred.password }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- DNS Enumeration Section -->
+    <h2>🌐 DNS Enumeration</h2>
+    {% if data.dns_results and data.dns_results|length > 0 %}
+      {% set total_subdomains = namespace(count=0) %}
+      {% for domain, dns_data in data.dns_results.items() %}
+        {% if dns_data.subdomains %}
+          {% set total_subdomains.count = total_subdomains.count + dns_data.subdomains|length %}
+        {% endif %}
+      {% endfor %}
+      
+      <div class="meta">
+        <p><strong>Status:</strong> <span style="color: #28a745;">✓ DNS enumeration completed</span></p>
+        <p><strong>Domains scanned:</strong> {{ data.dns_results|length }}</p>
+        <p><strong>Subdomains discovered:</strong> {{ total_subdomains.count }}</p>
+      </div>
+      
+      {% for domain, dns_data in data.dns_results.items() %}
+      <div class="host">
+        <h3>Domain: {{ domain }}</h3>
+        
+        {% if dns_data.subdomains and dns_data.subdomains|length > 0 %}
+        <div style="margin-top: 15px;">
+          <strong>🔍 Discovered Subdomains ({{ dns_data.subdomains|length }}):</strong>
+          <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #667eea; color: white;">
+                <th style="padding: 10px; text-align: left;">Subdomain</th>
+                <th style="padding: 10px; text-align: left;">IP Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for subdomain in dns_data.subdomains %}
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 8px; font-family: 'Courier New', monospace;">{{ subdomain.subdomain }}</td>
+                <td style="padding: 8px; font-family: 'Courier New', monospace;">{{ subdomain.ip }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="margin-top: 10px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+          <p style="margin: 0; color: #856404;">⚠️ No subdomains discovered during enumeration</p>
+        </div>
+        {% endif %}
+        
+        {% if dns_data.passive %}
+        <div style="margin-top: 15px;">
+          <strong>📋 Passive DNS Records:</strong>
+          {% if dns_data.passive.records %}
+            {% for record_type, records in dns_data.passive.records.items() %}
+              {% if records and records|length > 0 %}
+              <div style="margin-top: 10px;">
+                <em>{{ record_type }} Records:</em>
+                <ul style="font-family: 'Courier New', monospace; margin: 5px 0;">
+                  {% for record in records %}
+                  <li>{{ record }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="meta" style="background: #f8d7da; border-left: 4px solid #dc3545;">
+      <p style="color: #721c24; margin: 0;"><strong>⚠️ DNS enumeration was not performed</strong></p>
+      <p style="color: #721c24; margin: 5px 0 0 0;"><small>Reason: IP-only target or --dns-wordlist not specified</small></p>
+    </div>
+    {% endif %}
+
+    <!-- Directory Enumeration Section -->
+    <h2>📁 Directory & File Enumeration</h2>
+    {% if data.dir_results and data.dir_results|length > 0 %}
+      {% set total_paths = namespace(count=0) %}
+      {% for url, paths in data.dir_results.items() %}
+        {% if paths %}
+          {% set total_paths.count = total_paths.count + paths|length %}
+        {% endif %}
+      {% endfor %}
+      
+      <div class="meta">
+        <p><strong>Status:</strong> <span style="color: #28a745;">✓ Directory enumeration completed</span></p>
+        <p><strong>URLs scanned:</strong> {{ data.dir_results|length }}</p>
+        <p><strong>Paths/files discovered:</strong> {{ total_paths.count }}</p>
+      </div>
+      
+      {% for url, paths in data.dir_results.items() %}
+      <div class="host">
+        <h3>Target: {{ url }}</h3>
+        
+        {% if paths and paths|length > 0 %}
+        <div style="margin-top: 15px;">
+          <strong>🔍 Discovered Paths ({{ paths|length }}):</strong>
+          <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #667eea; color: white;">
+                <th style="padding: 10px; text-align: left;">Path</th>
+                <th style="padding: 10px; text-align: center;">Status Code</th>
+                <th style="padding: 10px; text-align: right;">Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for path in paths %}
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 8px; font-family: 'Courier New', monospace;">
+                  <a href="{{ url }}{{ path.path }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ path.path }}</a>
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                  {% if path.status|int >= 200 and path.status|int < 300 %}
+                  <span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">{{ path.status }}</span>
+                  {% elif path.status|int >= 300 and path.status|int < 400 %}
+                  <span style="background: #17a2b8; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">{{ path.status }}</span>
+                  {% elif path.status|int >= 400 and path.status|int < 500 %}
+                  <span style="background: #ffc107; color: #212529; padding: 3px 8px; border-radius: 3px; font-size: 12px;">{{ path.status }}</span>
+                  {% else %}
+                  <span style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">{{ path.status }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 8px; text-align: right; font-family: 'Courier New', monospace;">{{ path.size }} bytes</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="margin-top: 10px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+          <p style="margin: 0; color: #856404;">⚠️ No directories/files discovered during enumeration</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="meta" style="background: #f8d7da; border-left: 4px solid #dc3545;">
+      <p style="color: #721c24; margin: 0;"><strong>⚠️ Directory enumeration was not performed</strong></p>
+      <p style="color: #721c24; margin: 5px 0 0 0;"><small>Reason: No HTTP/HTTPS services found or --dir-wordlist not specified</small></p>
+    </div>
+    {% endif %}
+
+    <!-- Screenshots Section -->
+    <h2>📸 Web Service Screenshots</h2>
+    {% if data.screenshots and data.screenshots|length > 0 %}
+      {% set successful_screenshots = data.screenshots | selectattr('success', 'equalto', true) | list %}
+      {% set failed_screenshots = data.screenshots | selectattr('success', 'equalto', false) | list %}
+      
+      <div class="meta">
+        <p><strong>Status:</strong> <span style="color: #28a745;">✓ Screenshot capture completed</span></p>
+        <p><strong>Successful:</strong> {{ successful_screenshots|length }} / {{ data.screenshots|length }}</p>
+        {% if failed_screenshots|length > 0 %}
+        <p><strong>Failed:</strong> {{ failed_screenshots|length }}</p>
+        {% endif %}
+      </div>
+      
+      {% if successful_screenshots|length > 0 %}
+      <div style="margin-top: 20px;">
+        <strong>✓ Captured Screenshots:</strong>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; margin-top: 15px;">
+          {% for screenshot in successful_screenshots %}
+          <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; background: white;">
+            <div style="background: #667eea; color: white; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-family: 'Courier New', monospace; font-size: 14px;">
+              📸 {{ screenshot.url }}
+            </div>
+            <div style="text-align: center; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+              <a href="{{ screenshot.path }}" target="_blank" style="color: #667eea; text-decoration: none;">
+                <img src="{{ screenshot.path }}" alt="Screenshot of {{ screenshot.url }}" style="max-width: 100%; height: auto; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer;">
+              </a>
+              <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">Click to view full size</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+      {% if failed_screenshots|length > 0 %}
+      <div style="margin-top: 25px;">
+        <strong>✗ Failed Screenshots:</strong>
+        <ul style="margin-top: 10px; color: #721c24;">
+          {% for screenshot in failed_screenshots %}
+          <li style="margin: 5px 0;">
+            <span style="font-family: 'Courier New', monospace;">{{ screenshot.url }}</span>
+            {% if screenshot.error %}
+            <span style="font-size: 12px; color: #856404;"> - {{ screenshot.error }}</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% else %}
+    <div class="meta" style="background: #f8d7da; border-left: 4px solid #dc3545;">
+      <p style="color: #721c24; margin: 0;"><strong>⚠️ Screenshot capture was not performed</strong></p>
+      <p style="color: #721c24; margin: 5px 0 0 0;"><small>Reason: No HTTP/HTTPS services found, --no-screenshots flag used, or playwright not installed</small></p>
+    </div>
+    {% endif %}
+
+    <div class="meta" style="margin-top: 40px; text-align: center;">
+      <small>Generated by REX SCAN - Network Reconnaissance & Enumeration Tool</small>
+    </div>
+  </div>
+</body>
+</html>

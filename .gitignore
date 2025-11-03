@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+.cache/
+*.log
+tests/
+
+# Test outputs
+test_output*/
+*_test_output*/
+resume_test/
+advanced_feature_tests/
+screenshot_test*/
+metasploitable_test*/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scan outputs (user data)
+scan_*/
+output_*/
+
+# Ignore scan output directories but not the source code
+!rex_scan/
