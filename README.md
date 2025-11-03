@@ -393,7 +393,7 @@ REX SCAN is provided for educational and authorized security testing purposes on
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.0.1  
 **Status**: Production Ready  
 **Repository**: https://github.com/rexmirak/rex-scan  
 **Last Updated**: November 2025
