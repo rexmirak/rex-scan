@@ -1,738 +1,401 @@
-# REX SCAN# REX SCAN
+# REX SCAN
 
+A comprehensive, automated network reconnaissance and vulnerability scanner designed for penetration testers and security professionals.
 
+## Overview
 
-**REX SCAN** is a comprehensive network reconnaissance and vulnerability scanner designed for penetration testers and security professionals. It orchestrates multiple security tools (nmap, DNS enumeration, directory scanning, exploit searches) and produces detailed reports in multiple formats.**REX SCAN: Reconnaissance and Exploitation Scanner**
+REX SCAN is a powerful pentesting toolkit that orchestrates multiple security tools to perform thorough network reconnaissance, service enumeration, vulnerability detection, and exploitation research. It automates the workflow of professional security assessments while producing detailed, actionable reports in multiple formats.
 
+Built with modularity and extensibility in mind, REX SCAN integrates seamlessly with industry-standard tools while providing intelligent correlation of findings, automated credential testing, and advanced web application analysis.
 
+## Key Capabilities
 
-## FeaturesA comprehensive, modular penetration testing toolkit that automates reconnaissance, service enumeration, vulnerability detection, and exploitation research. Designed for professional security assessments with extensive reporting capabilities.
+### Network Reconnaissance
+- **Automated Port Scanning**: Intelligent nmap integration with customizable timing profiles
+- **Service Detection**: Deep service fingerprinting and version detection
+- **Multi-Target Support**: Scan single IPs, CIDR ranges, IP ranges, or target lists
+- **Flexible Scan Profiles**: Pre-configured profiles from stealth to aggressive
 
+### Enumeration & Analysis
+- **DNS Enumeration**: Subdomain discovery, zone transfer detection, DNS record analysis
+- **Directory Enumeration**: Web path discovery with intelligent wordlist management
+- **SSH Analysis**: Algorithm enumeration, weak cipher detection, version analysis
+- **SMB Analysis**: Share enumeration, null session detection, version fingerprinting
+- **Advanced Web Analysis**: SSL/TLS analysis, security headers, CMS detection, technology fingerprinting
 
+### Vulnerability Assessment
+- **CVE Correlation**: Automated CVE lookup based on detected services and versions
+- **Exploit Database Integration**: Searchsploit integration for exploit availability
+- **Vulnerability Scoring**: CVSS-based severity classification
+- **Credential Testing**: Conservative testing for default credentials and anonymous access
 
-- **Automated Network Scanning**: Intelligent nmap integration with service detection## Features
+### Automation & Reliability
+- **Resume Capability**: Interrupt and resume long-running scans without data loss
+- **State Management**: Automatic scan state tracking and recovery
+- **Rate Limiting**: Configurable request throttling to avoid detection
+- **Error Handling**: Graceful error recovery with detailed logging
 
-- **DNS Enumeration**: Subdomain discovery and DNS record analysis
+### Reporting
+- **Multi-Format Output**: Text, JSON, and HTML reports
+- **Interactive Dashboards**: Rich HTML reports with charts and visualizations
+- **Screenshot Capture**: Automated web service screenshot capture
+- **Scan Comparison**: Diff two scans to identify new vulnerabilities or changes
 
-- **Directory Enumeration**: Web path discovery with multiple wordlist support### Core Capabilities
+## Tools Used
 
-- **Vulnerability Correlation**: Automated exploit-db lookup and CVE matching- **Network Scanning**: Automated nmap integration with customizable timing and port ranges
+REX SCAN integrates and orchestrates the following security tools:
 
-- **Credential Testing**: Conservative credential checks (FTP anonymous, default passwords)- **Service Enumeration**: Targeted enumeration for SSH, SMB, HTTP, FTP, MySQL, and more
+### Required
+- **nmap**: Network scanning and service detection
+- **Python 3.8+**: Core runtime environment
 
-- **Advanced Web Analysis**: SSL certificate analysis, security header checks, technology detection- **DNS Enumeration**: Subdomain discovery with passive DNS lookups and zone transfer detection
+### Optional (Enhanced Functionality)
+- **searchsploit** (exploit-db): Vulnerability and exploit lookup
+- **gobuster**: High-performance directory enumeration
+- **dig**: DNS enumeration and analysis
+- **Playwright**: Web service screenshot capture
 
-- **Screenshot Capture**: Automated web service screenshot capture- **Directory Enumeration**: Web path discovery with multiple wordlists and extensions
+### Python Libraries
+- **dnspython**: DNS resolution and enumeration
+- **requests/httpx**: HTTP client for web enumeration
+- **Jinja2**: Report templating engine
+- **matplotlib/plotly**: Chart generation and visualization
+- **colorama**: Terminal output formatting
+- **tqdm**: Progress bars and status display
 
-- **Multi-Format Reports**: Text, JSON, and HTML reports with charts- **Advanced Web Analysis**: SSL/TLS analysis, security header checks, CMS detection, technology fingerprinting
+## Installation
 
-- **Resume Capability**: Interrupt and resume long-running scans- **Vulnerability Correlation**: Automated CVE lookup and exploit-db integration
+### Prerequisites
 
-- **Target Flexibility**: Single IPs, CIDR ranges, IP ranges, hostname lists- **Credential Testing**: Conservative credential checking with common defaults
+```bash
+# Ensure you have Python 3.8 or higher
+python3 --version
 
-- **Screenshot Capture**: Automated web service screenshot capture with Playwright
+# Install nmap (required)
+# macOS:
+brew install nmap
 
-## Requirements- **Multi-Target Support**: CIDR ranges, IP ranges, comma-separated targets, and file input
+# Ubuntu/Debian:
+sudo apt-get install nmap
 
-
-
-### System Tools (Required)### Reporting
-
-- **nmap** - Network scanning- **Text Reports**: Detailed findings in human-readable format
-
-- **searchsploit** (exploitdb) - Vulnerability/exploit lookup- **JSON Reports**: Machine-parsable output for integration
-
-- **HTML Reports**: Rich interactive reports with charts and visualizations
-
-### System Tools (Optional)- **Scan Comparison**: Diff two scans to identify changes
-
-- **gobuster** - Directory enumeration (Python fallback available)
-
-- **dig** - DNS enumeration (dnspython fallback available)### Advanced Features
-
-- **Scan Profiles**: Pre-configured profiles (stealth, balanced, aggressive, quick, full)
-
-### Python Requirements- **Rate Limiting**: Configurable request throttling to avoid detection
-
-- Python 3.8 or higher- **Resume Capability**: Interrupt and resume long-running scans
-
-- See `requirements.txt` for Python dependencies- **Modular Architecture**: Easy to extend with additional enumeration modules
-
-
-
-## Installation## Installation
-
-
-
-### 1. Clone Repository### Prerequisites
-
-
-
-```bash**Required:**
-
-git clone https://github.com/yourusername/rex_scan.git- Python 3.8 or higher
-
-cd rex_scan- nmap 7.0 or higher
-
+# Fedora/RHEL:
+sudo yum install nmap
 ```
 
-**Optional (for full functionality):**
+### Quick Install
 
-### 2. Create Python Virtual Environment- searchsploit (exploit-db)
-
-- gobuster (directory enumeration)
-
-```bash- playwright (screenshot capture)
+```bash
+# Clone the repository
+git clone https://github.com/rexmirak/rex-scan.git
+cd rex-scan
 
 # Create virtual environment
-
-python3 -m venv venv### Install Dependencies
-
-
-
-# Activate virtual environment```bash
-
-# On macOS/Linux:# Clone the repository
-
-source venv/bin/activategit clone <repository-url>
-
-# On Windows:cd rex_scan
-
-# venv\Scripts\activate
-
-```# Create virtual environment
-
 python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-### 3. Install Python Dependenciessource venv/bin/activate  # On Windows: venv\Scripts\activate
-
-
-
-```bash# Install Python dependencies
-
-# Install core dependenciespip install -r requirements.txt
-
+# Install dependencies
 pip install -r requirements.txt
 
-# Install system tools (Ubuntu/Debian)
+# Install optional tools (recommended)
+bash install_tools.sh
 
-# For screenshot capture, install playwright browserssudo apt-get install nmap exploitdb gobuster
-
+# Install Playwright browsers for screenshots
 playwright install chromium
 
-```# Install Playwright browsers (for screenshots)
-
-playwright install chromium
-
-### 4. Install System Tools```
-
-
-
-Run the automated installer:## Quick Start
-
-
-
-```bash### Interactive Mode
-
-# On macOS/Linux:
-
-bash install_tools.sh```bash
-
-python -m rex_scan
-
-# Or install manually:```
-
-# macOS:
-
-brew install nmap exploitdb gobuster bindThe tool will prompt for target, consent, and configuration options.
-
-
-
-# Debian/Ubuntu:### Basic Scan
-
-sudo apt-get install nmap exploitdb gobuster dnsutils
-
-```bash
-
-# RedHat/CentOS/Fedora:python -m rex_scan --target 192.168.1.100 --consent
-
-sudo yum install nmap```
-
-```
-
-### Common Use Cases
-
-### 5. Verify Installation
-
-**Quick scan with top 1000 ports:**
-
-```bash```bash
-
-# Check system toolspython -m rex_scan --target example.com --profile quick --consent
-
-nmap --version```
-
-searchsploit --version
-
-gobuster version  # optional**Full scan with all enumeration:**
-
-dig -v           # optional```bash
-
-python -m rex_scan --target 192.168.1.100 --profile full \
-
-# Run REX SCAN help  --dns-wordlist auto --dir-wordlist auto \
-
-python -m rex_scan --help  --screenshots --consent
-
-``````
-
-
-
-## Quick Start**Stealth scan:**
-
-```bash
-
-### Basic Scanpython -m rex_scan --target 10.0.0.5 --profile stealth --consent
-
-```
-
-```bash
-
-python -m rex_scan --target 192.168.1.100 --consent**Scan CIDR range:**
-
-``````bash
-
-python -m rex_scan --target 192.168.1.0/24 --ports 80,443 --consent
-
-### Scan with Custom Ports```
-
-
-
-```bash**Custom nmap flags:**
-
-python -m rex_scan --target 192.168.1.100 --ports 1-1000 --consent```bash
-
-```python -m rex_scan --target 192.168.1.100 \
-
-  --profile custom \
-
-### Full Enumeration Scan  --nmap-flags "-sS -T5 -p- -A -v" \
-
-  --consent
-
-```bash```
-
-python -m rex_scan \
-
-  --target 192.168.1.100 \## Usage
-
-  --ports 1-65535 \
-
-  --dns-wordlist /path/to/subdomains.txt \### Target Specification
-
-  --dir-wordlist /path/to/directories.txt \
-
-  --screenshots \```bash
-
-  --advanced-web \# Single IP
-
-  --consent \--target 192.168.1.100
-
-  --output ~/scans/target1
-
-```# Hostname
-
---target example.com
-
-### Scan Multiple Targets
-
-# CIDR range
-
-```bash--target 192.168.1.0/24
-
-# CIDR notation
-
-python -m rex_scan --target 192.168.1.0/24 --consent# IP range
-
---target 192.168.1.1-50
-
-# IP range
-
-python -m rex_scan --target 192.168.1.1-50 --consent# Comma-separated
-
---target 192.168.1.100,192.168.1.101
-
-# File with targets (one per line)
-
-python -m rex_scan --targets @targets.txt --consent# File input
-
---targets @targets.txt
-
-# Comma-separated```
-
-python -m rex_scan --target "192.168.1.100,192.168.1.200" --consent
-
-```### Scan Profiles
-
-
-
-### Resume Interrupted Scan- **stealth**: Slow, minimal intrusion (T1 timing)
-
-- **balanced**: Default safe scanning (T3 timing)
-
-```bash- **aggressive**: Fast, more intrusive (T4 timing)
-
-# If scan was interrupted (Ctrl+C)- **quick**: Top 1000 ports only
-
-python -m rex_scan --resume ~/scans/target1- **full**: All 65535 ports
-
-```- **custom**: Use with --nmap-flags for full control
-
-
-
-## Usage Examples### Enumeration Options
-
-
-
-### Scan Profiles```bash
-
-# DNS enumeration with wordlist
-
-REX SCAN includes predefined scan profiles:--dns-wordlist /path/to/subdomains.txt
-
---dns-wordlist auto  # Use built-in wordlist
-
-```bash
-
-# Stealth scan (T1 timing, minimal probes)# Directory enumeration
-
-python -m rex_scan --target 192.168.1.100 --profile stealth --consent--dir-wordlist /path/to/directories.txt
-
---dir-wordlist auto  # Use built-in wordlist
-
-# Balanced scan (default, T3 timing)--dir-extensions php,asp,aspx,jsp
-
-python -m rex_scan --target 192.168.1.100 --profile balanced --consent
-
-# Advanced web enumeration
-
-# Aggressive scan (T4 timing, comprehensive)--advanced-web
-
-python -m rex_scan --target 192.168.1.100 --profile aggressive --consent
-
-# Screenshot capture
-
-# Quick scan (T5 timing, fast)--screenshots
-
-python -m rex_scan --target 192.168.1.100 --profile quick --consent```
-
-
-
-# Full scan (all 65535 ports)### Output Options
-
-python -m rex_scan --target 192.168.1.100 --profile full --consent
-
-``````bash
-
-# Specify output directory
-
-### Custom nmap Flags--output ~/scans/target1
-
-
-
-```bash# Disable charts
-
-python -m rex_scan \--no-charts
-
-  --target 192.168.1.100 \
-
-  --profile custom \# Disable screenshots
-
-  --nmap-flags "-sS -T5 -p- -A -v" \--no-screenshots
-
-  --consent```
-
-```
-
-### Rate Limiting
-
-### DNS Enumeration Only
-
-```bash
-
-```bash# Requests per second
-
-python -m rex_scan \--rate-limit 5
-
-  --target example.com \
-
-  --dns-wordlist /usr/share/wordlists/subdomains.txt \# Delay between requests (seconds)
-
-  --no-vulns \--delay 2
-
-  --no-creds \```
-
-  --consent
-
-```### Resume and Comparison
-
-
-
-### Disable Specific Features```bash
-
-# Resume interrupted scan
-
-```bash--resume /path/to/scan/folder
-
-python -m rex_scan \
-
-  --target 192.168.1.100 \# Compare two scans
-
-  --no-screenshots \--diff /path/to/scan1/report.json /path/to/scan2/report.json
-
-  --no-charts \```
-
-  --no-creds \
-
-  --no-vulns \### Full Options
-
-  --consent
-
-``````bash
-
+# Verify installation
 python -m rex_scan --help
+```
 
-## Command Line Options```
-
-
-
-```## Output Structure
-
-Targeting:
-
-  --target TARGET        Single IP, hostname, or CIDR (e.g., 192.168.1.0/24)```
-
-  --targets FILE         File with targets (one per line)scan_folder/
-
-  --ports PORTS          Port specification (default: 1-1000)├── INDIVIDUAL/              # Individual tool outputs
-
-│   ├── nmap.xml            # Raw nmap output
-
-Scan Profiles:│   ├── nmap_parsed.json    # Parsed nmap data
-
-  --profile PROFILE      stealth, balanced, aggressive, quick, full, custom│   ├── dns_enum.json       # DNS enumeration results
-
-│   ├── dir_enum.json       # Directory enumeration results
-
-Enumeration:│   ├── advanced_web_enum.json  # Advanced web analysis
-
-  --dns-wordlist FILE    DNS subdomain wordlist (or 'auto', 'none')│   ├── searchsploit.txt    # Exploit search results
-
-  --dir-wordlist FILE    Directory enumeration wordlist (or 'auto', 'none')│   ├── vulnerabilities.json # CVE correlations
-
-  --advanced-web         Enable advanced web enumeration (SSL, headers, tech)│   └── credentials.json    # Credential check results
-
-  --screenshots          Capture web service screenshots├── REX_REPORTS/            # Final reports
-
-│   ├── report.txt          # Human-readable report
-
-Nmap Options:│   ├── report.json         # Machine-parsable report
-
-  --nmap-timing T        Nmap timing template (0-5)│   ├── report.html         # Interactive HTML report
-
-  --nmap-flags FLAGS     Custom nmap flags (requires --profile custom)│   └── charts/             # Visualization charts
-
-└── screenshots/            # Web service screenshots
-
-Rate Limiting:    ├── http_192.168.1.100_80.png
-
-  --rate-limit N         Maximum requests per second (default: 10)    └── https_192.168.1.100_443.png
-
-  --delay N              Delay between requests in seconds```
-
-
-
-Output:## Testing
-
-  --output DIR           Output directory (default: ~/Desktop/rex_scan_<timestamp>)
-
-  --no-charts            Disable chart generation### Run Test Suite
-
-  --quiet                Minimal output
+### Optional Tools Installation
 
 ```bash
+# macOS
+brew install exploitdb gobuster bind
 
-Control:# All tests
+# Ubuntu/Debian
+sudo apt-get install exploitdb gobuster dnsutils
 
-  --consent              Skip authorization promptpython -m pytest tests/
-
-  --yes                  Answer yes to all prompts
-
-  --no-creds             Disable credential checks# Specific test
-
-  --no-vulns             Disable vulnerability correlationpython -m pytest tests/test_nmap_parser.py
-
-  --continue-on-error    Continue scan even if errors occur
-
-# With coverage
-
-Resume:python -m pytest --cov=rex_scan tests/
-
-  --resume DIR           Resume interrupted scan from directory
-
-# Metasploitable validation
-
-Comparison:python tests/test_metasploitable.py
-
-  --diff SCAN1 SCAN2     Compare two scan reports
-
-```# Advanced features test
-
-python tests/test_advanced_features_v2.py
-
-## Output Structure
-
-# Resume functionality test
-
-Each scan creates an organized output directory:sudo python tests/test_resume_feature.py
-
+# Fedora/RHEL
+sudo yum install exploitdb gobuster bind-utils
 ```
 
-```
+## Usage
 
-scan_output/## Security and Ethics
-
-├── REX_REPORTS/
-
-│   ├── report.txt          # Human-readable text report**IMPORTANT:** Only use REX SCAN on systems you own or have explicit written authorization to test.
-
-│   ├── report.json         # Machine-readable JSON
-
-│   ├── report.html         # Interactive HTML dashboard- Unauthorized port scanning may be illegal in your jurisdiction
-
-│   └── charts/             # Visualization charts (if enabled)- Credential testing may trigger account lockouts or alerts
-
-│       ├── port_distribution.png- Directory enumeration can generate significant traffic
-
-│       ├── service_breakdown.png- Always obtain proper authorization before testing
-
-│       └── vulnerability_severity.png
-
-├── INDIVIDUAL/The tool requires explicit consent (--consent flag or interactive confirmation) before running potentially intrusive checks.
-
-│   ├── nmap.xml            # Raw nmap output
-
-│   ├── nmap_parsed.json    # Parsed nmap data## Architecture
-
-│   ├── dns_enum.json       # DNS enumeration results
-
-│   ├── dir_enum.json       # Directory scan resultsREX SCAN is built with a modular architecture:
-
-│   ├── advanced_web_enum.json  # Web analysis results
-
-│   ├── credentials.json    # Credential check results- **Core Engine**: Orchestrates scan workflow and manages state
-
-│   ├── vulnerabilities.json    # CVE/exploit matches- **Enumeration Modules**: Pluggable modules for different services
-
-│   └── searchsploit.txt    # Exploit-db search output- **Parser Layer**: Standardizes output from various tools
-
-└── SCREENSHOTS/            # Web service screenshots (if enabled)- **Reporting Engine**: Generates multiple output formats
-
-    ├── http_192.168.1.100_80.png- **Rate Limiter**: Controls request frequency
-
-    └── https_192.168.1.100_443.png- **State Manager**: Enables scan resume capability
-
-```
-
-## Troubleshooting
-
-## Testing
-
-### Common Issues
-
-REX SCAN includes comprehensive test suites:
-
-**"nmap not found"**
-
-```bash```bash
-
-# Run all tests# Install nmap
-
-python tests/test_metasploitable.pysudo apt-get install nmap  # Debian/Ubuntu
-
-python tests/test_resume_feature.pybrew install nmap           # macOS
-
-``````
-
-
-
-## Security Considerations**"Permission denied"**
+### Basic Syntax
 
 ```bash
-
-### Authorization# SYN scans require root
-
-sudo python -m rex_scan --target 192.168.1.100 --consent
-
-**IMPORTANT**: Only scan systems you own or have explicit written authorization to test.```
-
-
-
-- REX SCAN will prompt for authorization unless `--consent` is used**"No module named 'rex_scan'"**
-
-- Credential testing is enabled by default (use `--no-creds` to disable)```bash
-
-- Some scan profiles are more intrusive than others# Ensure you're in the project directory and virtual environment is activated
-
-- Always review applicable laws and regulationssource venv/bin/activate
-
+python -m rex_scan --target <TARGET> [OPTIONS] --consent
 ```
 
-### Network Impact
+### Scan Profiles
 
-**Screenshots not working**
+REX SCAN includes pre-configured profiles optimized for different scenarios:
 
-- Aggressive scans may trigger IDS/IPS systems```bash
+| Profile | Timing | Ports | Use Case |
+|---------|--------|-------|----------|
+| `stealth` | T1 (Slow) | Top 1000 | Evade IDS/IPS detection |
+| `balanced` | T3 (Normal) | Top 1000 | Default safe scanning |
+| `aggressive` | T4 (Fast) | Top 1000 | Time-sensitive assessments |
+| `quick` | T5 (Insane) | Top 1000 | Rapid reconnaissance |
+| `full` | T3 (Normal) | All 65535 | Comprehensive assessment |
+| `custom` | User-defined | Custom | Full control with --nmap-flags |
 
-- Rate limiting is enabled by default (10 req/sec)# Install Playwright browsers
-
-- Use `--profile stealth` for less noisy scansplaywright install chromium
-
-- Consider `--delay` for rate-sensitive targets```
-
-
-
-### Data Handling## Contributing
-
-
-
-- Scan results may contain sensitive informationContributions are welcome! Please:
-
-- Output directories should be protected appropriately
-
-- HTML reports are self-contained (safe to share filtered)1. Fork the repository
-
-- JSON reports include raw data (review before sharing)2. Create a feature branch
-
-3. Add tests for new functionality
-
-## Troubleshooting4. Ensure all tests pass
-
-5. Submit a pull request
-
-### Common Issues
-
-## Documentation
-
-**"nmap not found"**
-
-```bash- **FEATURES.md**: Detailed feature documentation
-
-# Install nmap- **QUICK_REFERENCE.md**: Command reference and examples
-
-# macOS: brew install nmap- **COMPREHENSIVE_AUDIT_REPORT.md**: Testing and validation report
-
-# Linux: sudo apt-get install nmap- **RESUME_FUNCTIONALITY_TEST_REPORT.md**: Resume capability testing
+### Command Line Options
 
 ```
+Target Specification:
+  --target IP|HOSTNAME|CIDR    Single target or CIDR range
+  --targets @FILE              File with targets (one per line)
+  --ports RANGE                Port range (default: 1-1000)
 
-## License
+Scan Configuration:
+  --profile PROFILE            Scan profile (stealth|balanced|aggressive|quick|full|custom)
+  --nmap-flags FLAGS           Custom nmap flags (requires --profile custom)
+  --rate-limit N               Max requests per second (default: 10)
+  --delay N                    Delay between requests in seconds
 
-**"searchsploit not found"**
+Enumeration:
+  --dns-wordlist FILE|auto     DNS subdomain wordlist
+  --dir-wordlist FILE|auto     Directory enumeration wordlist
+  --advanced-web               Enable advanced web analysis
+  --screenshots                Capture web service screenshots
 
-```bashThis project is provided under the MIT License. See LICENSE file for details.
+Vulnerability Assessment:
+  --no-vulns                   Disable vulnerability correlation
+  --no-creds                   Disable credential testing
 
-# Install exploitdb
+Output:
+  --output DIR                 Output directory (default: ~/Desktop/rex_scan_<timestamp>)
+  --no-charts                  Disable chart generation
+  --quiet                      Minimal output
 
-# macOS: brew install exploitdb## Disclaimer
+Control:
+  --consent                    Skip authorization prompt
+  --yes                        Answer yes to all prompts
+  --resume DIR                 Resume interrupted scan
+  --diff SCAN1 SCAN2           Compare two scans
+```
 
-# Linux: sudo apt-get install exploitdb
+## Quick Examples
 
-```This tool is provided for educational and authorized security testing purposes only. The authors are not responsible for misuse or damage caused by this program. Always ensure you have proper authorization before conducting security assessments.
+### Single Host Scan
 
-
-**"Screenshots failing"**
 ```bash
-# Install playwright browsers
-playwright install chromium
-```
+# Basic scan with default settings
+python -m rex_scan --target 192.168.1.100 --consent
 
-**"Permission denied" errors**
-```bash
-# Some scans require sudo (SYN scan, etc.)
-sudo python -m rex_scan --target 192.168.1.100 --consent
-```
+# Stealth scan (slow, evasive)
+python -m rex_scan --target 192.168.1.100 --profile stealth --consent
 
-**"Scan very slow"**
-```bash
-# Use faster timing profile
+# Quick scan (fast reconnaissance)
 python -m rex_scan --target 192.168.1.100 --profile quick --consent
-
-# Or reduce port range
-python -m rex_scan --target 192.168.1.100 --ports 1-100 --consent
 ```
 
-### Debug Mode
-
-For verbose output and debugging:
+### Network Range Scanning
 
 ```bash
-python -m rex_scan --target 192.168.1.100 --consent -v
+# Scan entire subnet
+python -m rex_scan --target 192.168.1.0/24 --consent
+
+# Scan IP range
+python -m rex_scan --target 192.168.1.1-50 --consent
+
+# Multiple targets from file
+echo "192.168.1.100" > targets.txt
+echo "192.168.1.200" >> targets.txt
+python -m rex_scan --targets @targets.txt --consent
 ```
 
-## Development
+### Comprehensive Assessment
 
-### Project Structure
+```bash
+# Full scan with all enumeration features
+python -m rex_scan \
+  --target 192.168.1.100 \
+  --profile full \
+  --dns-wordlist auto \
+  --dir-wordlist auto \
+  --advanced-web \
+  --screenshots \
+  --consent \
+  --output ~/security-assessment
+```
+
+### Custom Nmap Scan
+
+```bash
+# Advanced nmap options
+python -m rex_scan \
+  --target 192.168.1.100 \
+  --profile custom \
+  --nmap-flags "-sS -sV -O -A -T4 -p-" \
+  --consent
+```
+
+### Resume Interrupted Scan
+
+```bash
+# If scan was interrupted (Ctrl+C)
+python -m rex_scan --resume ~/Desktop/rex_scan_2025-11-04_123456
+```
+
+### Scan Comparison
+
+```bash
+# Compare two scans to identify changes
+python -m rex_scan \
+  --diff ~/scans/baseline/REX_REPORTS/report.json \
+        ~/scans/current/REX_REPORTS/report.json
+```
+
+## Where to Find Results
+
+Each scan creates a timestamped directory with organized output:
 
 ```
-rex_scan/
-├── rex_scan/              # Main package
-│   ├── __init__.py
-│   ├── __main__.py       # Entry point
-│   ├── cli.py            # Command-line interface
-│   ├── config.py         # Configuration
-│   ├── nmap_runner.py    # Nmap execution
-│   ├── nmap_parser.py    # Nmap XML parsing
-│   ├── target_parser.py  # Target parsing (CIDR, ranges)
-│   ├── dns_enum.py       # DNS enumeration
-│   ├── dir_enum.py       # Directory scanning
-│   ├── advanced_web_enum.py  # Web analysis
-│   ├── screenshot.py     # Screenshot capture
-│   ├── exploitdb.py      # Exploit-db integration
-│   ├── vuln_correlator.py    # CVE matching
-│   ├── creds.py          # Credential testing
-│   ├── report.py         # Report generation
-│   ├── chart_generator.py    # Visualization
-│   ├── diff_scanner.py   # Scan comparison
-│   ├── scan_state.py     # Resume capability
-│   └── templates/        # Report templates
-│       └── report.html.j2
-├── tests/                # Test suite
-│   ├── test_metasploitable.py
-│   └── test_resume_feature.py
-├── requirements.txt      # Python dependencies
-├── setup.py             # Package setup
-├── install_tools.sh     # System tools installer
-└── README.md            # This file
+~/Desktop/rex_scan_2025-11-04_123456/
+│
+├── REX_REPORTS/                    # Final consolidated reports
+│   ├── report.txt                  # Human-readable text report
+│   ├── report.json                 # Machine-parsable JSON output
+│   ├── report.html                 # Interactive HTML dashboard (open in browser)
+│   └── charts/                     # Visualization charts
+│       ├── port_distribution.png
+│       ├── service_breakdown.png
+│       └── vulnerability_severity.png
+│
+├── INDIVIDUAL/                     # Raw tool outputs
+│   ├── nmap.xml                    # Raw nmap XML output
+│   ├── nmap_parsed.json            # Structured nmap data
+│   ├── dns_enum.json               # DNS enumeration results
+│   ├── dir_enum.json               # Directory scan results
+│   ├── ssh_enum.json               # SSH analysis results
+│   ├── smb_enum.json               # SMB analysis results
+│   ├── advanced_web_enum.json      # Web analysis results
+│   ├── searchsploit.txt            # Exploit database results
+│   ├── vulnerabilities.json        # CVE correlations
+│   └── credentials.json            # Credential test results
+│
+└── SCREENSHOTS/                    # Web service screenshots
+    ├── http_192.168.1.100_80.png
+    └── https_192.168.1.100_443.png
 ```
+
+### Viewing Results
+
+**HTML Report (Recommended):**
+```bash
+# Open the interactive HTML report in your browser
+open ~/Desktop/rex_scan_*/REX_REPORTS/report.html
+```
+
+**Text Report:**
+```bash
+# View human-readable text report
+cat ~/Desktop/rex_scan_*/REX_REPORTS/report.txt
+```
+
+**JSON Report (For Integration):**
+```bash
+# Parse JSON output with jq
+cat ~/Desktop/rex_scan_*/REX_REPORTS/report.json | jq .
+```
+
+## Security & Ethics
+
+**IMPORTANT**: REX SCAN is designed for authorized security testing only.
+
+- ⚠️ **Authorization Required**: Only scan systems you own or have explicit written permission to test
+- ⚠️ **Legal Compliance**: Unauthorized scanning may violate laws in your jurisdiction
+- ⚠️ **Network Impact**: Aggressive scans can disrupt services or trigger alerts
+- ⚠️ **Data Protection**: Scan results may contain sensitive information
+
+### Best Practices
+
+- Always obtain written authorization before testing
+- Use appropriate scan profiles (`--profile stealth` for sensitive environments)
+- Respect rate limits and consider `--delay` for fragile systems
+- Secure scan outputs and reports appropriately
+- Review and comply with applicable laws and regulations
+
+## Contributing
+
+We welcome contributions from the security community! Whether you're fixing bugs, adding features, improving documentation, or sharing ideas, your help makes REX SCAN better for everyone.
+
+### How to Contribute
+
+1. **Fork the Repository**
+   ```bash
+   git clone https://github.com/rexmirak/rex-scan.git
+   cd rex-scan
+   ```
+
+2. **Create a Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make Your Changes**
+   - Write clean, documented code
+   - Follow existing code style and conventions
+   - Add tests for new functionality
+
+4. **Test Your Changes**
+
+5. **Submit a Pull Request**
+   - Provide a clear description of changes
+   - Reference any related issues
+   - Ensure all tests pass
+
+### Areas for Contribution
+
+- **New Enumeration Modules**: Add support for additional services (RDP, VNC, etc.)
+- **Enhanced Reporting**: Improve report templates and visualizations
+- **Performance Optimization**: Speed improvements and resource management
+- **Documentation**: Improve guides, examples, and API documentation
+- **Testing**: Expand test coverage and add new test cases
+- **Bug Fixes**: Identify and fix issues
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+
+# Install pre-commit hooks (optional)
+# pip install pre-commit
+# pre-commit install
+
+```
+
+### Reporting Issues
+
+Found a bug or have a feature request? [Open an issue](https://github.com/rexmirak/rex-scan/issues) with:
+- Clear description of the problem/feature
+- Steps to reproduce (for bugs)
+- Expected vs actual behavior
+- Environment details (OS, Python version, tool versions)
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Disclaimer
 
-This tool is designed for authorized security testing and research purposes only. The authors and contributors are not responsible for misuse or damage caused by this tool. Users must ensure they have proper authorization before scanning any systems.
+REX SCAN is provided for educational and authorized security testing purposes only. The authors and contributors are not responsible for misuse or damage caused by this tool. Users are solely responsible for ensuring they have proper authorization before conducting any security assessments.
 
 ## Acknowledgments
 
-- **nmap** - Network scanning foundation
-- **exploit-db** - Vulnerability database
-- **gobuster** - Directory enumeration
-- All contributors and security researchers
+- **nmap** by Gordon Lyon (Fyodor) - The foundation of network scanning
+- **exploit-db** by Offensive Security - Vulnerability and exploit database
+- **gobuster** by OJ Reeves - High-performance directory enumeration
+- The open-source security community for continued innovation
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 1.0.0  
 **Status**: Production Ready  
+**Repository**: https://github.com/rexmirak/rex-scan  
 **Last Updated**: November 2025
+
+For questions, issues, or contributions, visit our [GitHub repository](https://github.com/rexmirak/rex-scan).
