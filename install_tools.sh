@@ -157,7 +157,70 @@ install_gobuster() {
         gobuster version 2>/dev/null || echo "gobuster available"
         return 0
     else
-        echo -e "${YELLOW}[!] gobuster installation failed (optional tool)${NC}"
+        echo -e "${YELLOW}[!] gobuster installation failed (optional tool, Python fallback available)${NC}"
+        return 1
+    fi
+}
+
+# Function to install dnsenum
+install_dnsenum() {
+    echo -e "${YELLOW}[*] Installing dnsenum...${NC}"
+    case $OS in
+        macos)
+            echo -e "${YELLOW}[!] dnsenum not available via Homebrew on macOS${NC}"
+            echo -e "${YELLOW}[!] Python fallback (dnspython) will be used instead${NC}"
+            return 1
+            ;;
+        debian)
+            apt-get update
+            apt-get install -y dnsenum
+            ;;
+        redhat)
+            # dnsenum not in default repos
+            echo -e "${YELLOW}[!] dnsenum not in default repos for RedHat/CentOS${NC}"
+            echo -e "${YELLOW}[!] Python fallback (dnspython) will be used instead${NC}"
+            return 1
+            ;;
+        arch)
+            pacman -S --noconfirm dnsenum
+            ;;
+    esac
+    
+    if command_exists dnsenum; then
+        echo -e "${GREEN}[✓] dnsenum installed successfully${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}[!] dnsenum installation failed (optional tool, dnspython fallback available)${NC}"
+        return 1
+    fi
+}
+
+# Function to install dirb
+install_dirb() {
+    echo -e "${YELLOW}[*] Installing dirb...${NC}"
+    case $OS in
+        macos)
+            echo -e "${YELLOW}[!] dirb not available via Homebrew on macOS${NC}"
+            echo -e "${YELLOW}[!] Python fallback will be used instead${NC}"
+            return 1
+            ;;
+        debian)
+            apt-get update
+            apt-get install -y dirb
+            ;;
+        redhat)
+            yum install -y dirb
+            ;;
+        arch)
+            pacman -S --noconfirm dirb
+            ;;
+    esac
+    
+    if command_exists dirb; then
+        echo -e "${GREEN}[✓] dirb installed successfully${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}[!] dirb installation failed (optional tool, Python fallback available)${NC}"
         return 1
     fi
 }
@@ -203,6 +266,8 @@ echo ""
 NMAP_OK=false
 EXPLOITDB_OK=false
 GOBUSTER_OK=false
+DNSENUM_OK=false
+DIRB_OK=false
 DIG_OK=false
 
 # Install nmap (required)
@@ -235,7 +300,7 @@ if command_exists gobuster; then
     echo -e "${GREEN}[✓] gobuster already installed${NC}"
     GOBUSTER_OK=true
 else
-    echo -e "${YELLOW}[?] gobuster is optional but recommended for directory enumeration${NC}"
+    echo -e "${YELLOW}[?] gobuster is optional but recommended for high-performance directory enumeration${NC}"
     read -p "Install gobuster? [Y/n] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
@@ -249,12 +314,58 @@ fi
 
 echo ""
 
+# Install dnsenum (optional, Linux only)
+if command_exists dnsenum; then
+    echo -e "${GREEN}[✓] dnsenum already installed${NC}"
+    DNSENUM_OK=true
+else
+    if [[ "$OS" != "macos" ]]; then
+        echo -e "${YELLOW}[?] dnsenum is optional but recommended for advanced DNS enumeration${NC}"
+        read -p "Install dnsenum? [Y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+            if install_dnsenum; then
+                DNSENUM_OK=true
+            fi
+        else
+            echo -e "${YELLOW}[!] Skipping dnsenum (dnspython fallback will be used)${NC}"
+        fi
+    else
+        echo -e "${YELLOW}[!] dnsenum not available on macOS (dnspython fallback will be used)${NC}"
+    fi
+fi
+
+echo ""
+
+# Install dirb (optional, Linux only)
+if command_exists dirb; then
+    echo -e "${GREEN}[✓] dirb already installed${NC}"
+    DIRB_OK=true
+else
+    if [[ "$OS" != "macos" ]]; then
+        echo -e "${YELLOW}[?] dirb is optional for alternative directory enumeration${NC}"
+        read -p "Install dirb? [Y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+            if install_dirb; then
+                DIRB_OK=true
+            fi
+        else
+            echo -e "${YELLOW}[!] Skipping dirb (Python fallback will be used)${NC}"
+        fi
+    else
+        echo -e "${YELLOW}[!] dirb not available on macOS (Python fallback will be used)${NC}"
+    fi
+fi
+
+echo ""
+
 # Install dig (optional)
 if command_exists dig; then
     echo -e "${GREEN}[✓] dig already installed${NC}"
     DIG_OK=true
 else
-    echo -e "${YELLOW}[?] dig is optional but recommended for DNS enumeration${NC}"
+    echo -e "${YELLOW}[?] dig is optional but useful for DNS queries${NC}"
     read -p "Install DNS utilities (dig)? [Y/n] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
@@ -287,7 +398,19 @@ fi
 if $GOBUSTER_OK; then
     echo -e "${GREEN}[✓] gobuster      - INSTALLED (optional)${NC}"
 else
-    echo -e "${YELLOW}[!] gobuster      - NOT INSTALLED (optional)${NC}"
+    echo -e "${YELLOW}[!] gobuster      - NOT INSTALLED (optional, Python fallback available)${NC}"
+fi
+
+if $DNSENUM_OK; then
+    echo -e "${GREEN}[✓] dnsenum       - INSTALLED (optional)${NC}"
+else
+    echo -e "${YELLOW}[!] dnsenum       - NOT INSTALLED (optional, dnspython fallback available)${NC}"
+fi
+
+if $DIRB_OK; then
+    echo -e "${GREEN}[✓] dirb          - INSTALLED (optional)${NC}"
+else
+    echo -e "${YELLOW}[!] dirb          - NOT INSTALLED (optional, Python fallback available)${NC}"
 fi
 
 if $DIG_OK; then

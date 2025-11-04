@@ -10,8 +10,10 @@ Uses ssh-audit if available, falls back to basic socket connection.
 """
 import subprocess
 import socket
+import time
 import re
 from typing import Dict, List, Any
+from rex_scan.command_tracker import get_tracker
 
 
 def check_ssh_audit() -> bool:
@@ -100,14 +102,31 @@ def enumerate_ssh_with_audit(host: str, port: int = 22, timeout: int = 30) -> Di
         result["errors"].append("ssh-audit not installed - limited analysis")
         return result
     
+    tracker = get_tracker()
+    
     try:
         cmd = ["ssh-audit", "-p", str(port), "-j", host]
+        cmd_str = " ".join(cmd)
+        start_time = time.time()
         
         proc = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout
+        )
+        
+        duration = time.time() - start_time
+        
+        # Track command
+        tracker.track(
+            tool="ssh-audit",
+            command=cmd_str,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            exit_code=proc.returncode,
+            duration=duration,
+            context=f"SSH enumeration for {host}:{port}"
         )
         
         output = proc.stdout

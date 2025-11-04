@@ -1,12 +1,16 @@
-"""Directory and file enumeration for HTTP/HTTPS services."""
+"""Directory and file enumeration for HTTP/HTTPS services.
+
+Supports both external tools (gobuster, dirb) and Python fallback.
+"""
 import subprocess
 import shutil
 import logging
 import requests
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Set
 from pathlib import Path
-import time
+from rex_scan.command_tracker import get_tracker
 
 logger = logging.getLogger("rex_scan.dir_enum")
 
@@ -16,17 +20,42 @@ def has_gobuster() -> bool:
     return shutil.which("gobuster") is not None
 
 
+def has_dirb() -> bool:
+    """Check if dirb is installed."""
+    return shutil.which("dirb") is not None
+
+
 def gobuster_dir(url: str, wordlist: str, extensions: List[str] = None, timeout: int = 120) -> List[Dict]:
     """Run gobuster dir mode against a URL."""
     if not has_gobuster():
         raise RuntimeError("gobuster not found")
     
-    cmd = ["gobuster", "dir", "-u", url, "-w", wordlist, "-q", "--no-error"]
+    tracker = get_tracker()
+    # Convert wordlist to string if it's a Path object
+    wordlist_str = str(wordlist) if not isinstance(wordlist, str) else wordlist
+    cmd = ["gobuster", "dir", "-u", url, "-w", wordlist_str, "-q", "--no-error"]
     if extensions:
         cmd.extend(["-x", ",".join(extensions)])
     
+    cmd_str = " ".join(cmd)
+    start_time = time.time()
+    
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                            text=True, timeout=timeout)
+        duration = time.time() - start_time
+        
+        # Track command
+        tracker.track(
+            tool="gobuster",
+            command=cmd_str,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            exit_code=proc.returncode,
+            duration=duration,
+            context=f"Directory enumeration for {url}"
+        )
+        
         results = []
         # Parse gobuster output: "path (Status: 200) [Size: 123]"
         for line in proc.stdout.splitlines():
@@ -58,10 +87,119 @@ def gobuster_dir(url: str, wordlist: str, extensions: List[str] = None, timeout:
         
         return results
     except subprocess.TimeoutExpired:
+        duration = time.time() - start_time
         logger.warning(f"gobuster timed out after {timeout}s")
+        tracker.track(
+            tool="gobuster",
+            command=cmd_str,
+            stdout="",
+            stderr=f"Timeout after {timeout}s",
+            exit_code=-1,
+            duration=duration,
+            context=f"Directory enumeration for {url} (TIMEOUT)"
+        )
         return []
     except Exception as e:
+        duration = time.time() - start_time
         logger.error(f"gobuster failed: {e}")
+        tracker.track(
+            tool="gobuster",
+            command=cmd_str,
+            stdout="",
+            stderr=str(e),
+            exit_code=-1,
+            duration=duration,
+            context=f"Directory enumeration for {url} (ERROR)"
+        )
+        return []
+
+
+def dirb_scan(url: str, wordlist: str, extensions: List[str] = None, timeout: int = 120) -> List[Dict]:
+    """Run dirb tool against a URL."""
+    if not has_dirb():
+        raise RuntimeError("dirb not found")
+    
+    tracker = get_tracker()
+    # Convert wordlist to string if it's a Path object
+    wordlist_str = str(wordlist) if not isinstance(wordlist, str) else wordlist
+    cmd = ["dirb", url, wordlist_str, "-S", "-w"]  # -S = silent, -w = don't stop on warnings
+    
+    if extensions:
+        # dirb uses -X flag for extensions
+        cmd.extend(["-X", f".{',. '.join(extensions)}"])
+    
+    cmd_str = " ".join(cmd)
+    start_time = time.time()
+    
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, timeout=timeout)
+        duration = time.time() - start_time
+        
+        # Track command
+        tracker.track(
+            tool="dirb",
+            command=cmd_str,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            exit_code=proc.returncode,
+            duration=duration,
+            context=f"Directory enumeration for {url}"
+        )
+        
+        results = []
+        # Parse dirb output: "+ http://example.com/admin (CODE:200|SIZE:1234)"
+        for line in proc.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("+ "):
+                try:
+                    # Extract URL and metadata
+                    parts = line.split()
+                    found_url = parts[1]
+                    path = found_url.replace(url.rstrip("/"), "")
+                    
+                    # Extract status code
+                    status = ""
+                    size = ""
+                    if "(CODE:" in line:
+                        metadata = line.split("(")[1].split(")")[0]
+                        if "CODE:" in metadata:
+                            status = metadata.split("CODE:")[1].split("|")[0]
+                        if "SIZE:" in metadata:
+                            size = metadata.split("SIZE:")[1]
+                    
+                    result = {"path": path, "status": status, "size": size}
+                    results.append(result)
+                    logger.info(f"Found directory: {path} (Status: {status})")
+                except Exception as e:
+                    logger.debug(f"Failed to parse dirb line: {line} - {e}")
+        
+        return results
+    except subprocess.TimeoutExpired:
+        duration = time.time() - start_time
+        logger.warning(f"dirb timed out after {timeout}s")
+        tracker.track(
+            tool="dirb",
+            command=cmd_str,
+            stdout="",
+            stderr=f"Timeout after {timeout}s",
+            exit_code=-1,
+            duration=duration,
+            context=f"Directory enumeration for {url} (TIMEOUT)"
+        )
+        return []
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"dirb failed: {e}")
+        tracker.track(
+            tool="dirb",
+            command=cmd_str,
+            stdout="",
+            stderr=str(e),
+            exit_code=-1,
+            duration=duration,
+            context=f"Directory enumeration for {url} (ERROR)"
+        )
         return []
 
 
@@ -105,16 +243,59 @@ def python_dir_bruteforce(url: str, wordlist: str, extensions: List[str] = None,
     return results
 
 
-def enumerate_directories(url: str, wordlist: str = None, extensions: List[str] = None, use_gobuster: bool = True) -> List[Dict]:
-    """Enumerate directories/files. Prefer gobuster if available, fallback to Python."""
-    if not wordlist:
-        # create minimal default wordlist
-        default_paths = ["admin", "login", "api", "backup", "config", "test", "dev", "uploads"]
-        return python_dir_bruteforce(url, None, extensions, threads=5) if False else []
+def enumerate_directories(url: str, wordlist: str = None, extensions: List[str] = None, 
+                         prefer_external: bool = True, tool_preference: str = "gobuster") -> Dict:
+    """
+    Enumerate directories/files using available tools.
     
-    if use_gobuster and has_gobuster():
-        logger.info(f"Using gobuster for directory enumeration: {url}")
-        return gobuster_dir(url, wordlist, extensions)
-    else:
-        logger.info(f"Using Python bruteforcer for directory enumeration: {url}")
-        return python_dir_bruteforce(url, wordlist, extensions)
+    Args:
+        url: Target URL
+        wordlist: Path to wordlist file
+        extensions: List of file extensions to check
+        prefer_external: Try external tools before Python fallback
+        tool_preference: Preferred external tool ("gobuster" or "dirb")
+    
+    Returns:
+        Dict with enumeration results and metadata
+    """
+    if not wordlist:
+        logger.warning("No wordlist provided for directory enumeration")
+        return {"method": "none", "results": [], "error": "No wordlist provided"}
+    
+    results_data = {
+        "method": "unknown",
+        "url": url,
+        "results": [],
+        "error": None
+    }
+    
+    if prefer_external:
+        # Try preferred tool first
+        if tool_preference == "gobuster" and has_gobuster():
+            logger.info(f"Using gobuster for directory enumeration: {url}")
+            results_data["method"] = "gobuster"
+            results_data["results"] = gobuster_dir(url, wordlist, extensions)
+            return results_data
+        elif tool_preference == "dirb" and has_dirb():
+            logger.info(f"Using dirb for directory enumeration: {url}")
+            results_data["method"] = "dirb"
+            results_data["results"] = dirb_scan(url, wordlist, extensions)
+            return results_data
+        
+        # Fallback to the other external tool
+        if has_gobuster() and tool_preference != "gobuster":
+            logger.info(f"Using gobuster (fallback) for directory enumeration: {url}")
+            results_data["method"] = "gobuster"
+            results_data["results"] = gobuster_dir(url, wordlist, extensions)
+            return results_data
+        elif has_dirb() and tool_preference != "dirb":
+            logger.info(f"Using dirb (fallback) for directory enumeration: {url}")
+            results_data["method"] = "dirb"
+            results_data["results"] = dirb_scan(url, wordlist, extensions)
+            return results_data
+    
+    # Final fallback to Python implementation
+    logger.info(f"Using Python bruteforcer for directory enumeration: {url}")
+    results_data["method"] = "python"
+    results_data["results"] = python_dir_bruteforce(url, wordlist, extensions)
+    return results_data

@@ -9,9 +9,11 @@ Performs comprehensive SMB enumeration including:
 Requires smbclient to be installed (optional tool).
 """
 import subprocess
+import time
 import re
 from typing import Dict, List, Any
 from pathlib import Path
+from rex_scan.command_tracker import get_tracker
 
 
 def check_smbclient() -> bool:
@@ -48,6 +50,8 @@ def enumerate_smb_shares(host: str, port: int = 445, timeout: int = 10) -> Dict[
         result["errors"].append("smbclient not installed")
         return result
     
+    tracker = get_tracker()
+    
     # Try null session enumeration
     try:
         cmd = [
@@ -56,12 +60,27 @@ def enumerate_smb_shares(host: str, port: int = 445, timeout: int = 10) -> Dict[
             "-N",  # No password (null session)
             "-p", str(port)
         ]
+        cmd_str = " ".join(cmd)
+        start_time = time.time()
         
         proc = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout
+        )
+        
+        duration = time.time() - start_time
+        
+        # Track command
+        tracker.track(
+            tool="smbclient",
+            command=cmd_str,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            exit_code=proc.returncode,
+            duration=duration,
+            context=f"SMB share enumeration for {host}:{port}"
         )
         
         output = proc.stdout + proc.stderr
@@ -130,6 +149,8 @@ def enumerate_smb_users(host: str, username: str = "", password: str = "", timeo
         result["errors"].append("rpcclient not installed")
         return result
     
+    tracker = get_tracker()
+    
     try:
         # Build rpcclient command
         if username:
@@ -148,11 +169,27 @@ def enumerate_smb_users(host: str, username: str = "", password: str = "", timeo
                 "-c", "enumdomusers"
             ]
         
+        cmd_str = " ".join(cmd).replace(f"{password}", "***") if password else " ".join(cmd)
+        start_time = time.time()
+        
         proc = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout
+        )
+        
+        duration = time.time() - start_time
+        
+        # Track command (mask password)
+        tracker.track(
+            tool="rpcclient",
+            command=cmd_str,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            exit_code=proc.returncode,
+            duration=duration,
+            context=f"SMB user enumeration for {host}"
         )
         
         output = proc.stdout

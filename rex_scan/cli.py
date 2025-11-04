@@ -1081,11 +1081,25 @@ def scan_single_target(target, args, profile, creds_enabled, rate_limiter, logge
                               "phpmyadmin", "phpinfo", "upload", "uploads", "backup", "config", "api",
                               "test", "dev", "staging", "www", "web", "index.php", "login.php"]
             
-            for base_url, paths in dir_results.items():
+            for base_url, dir_data in dir_results.items():
+                # Handle new dict structure from enumerate_directories
+                if isinstance(dir_data, dict):
+                    paths = dir_data.get("results", [])
+                else:
+                    # Fallback for old list structure
+                    paths = dir_data if dir_data else []
+                
                 if paths:
                     for path_obj in paths:
-                        path = path_obj.get("path", "")
-                        status = path_obj.get("status", "")
+                        # Handle both dict and string formats
+                        if isinstance(path_obj, dict):
+                            path = path_obj.get("path", "")
+                            status = str(path_obj.get("status", ""))
+                        elif isinstance(path_obj, str):
+                            path = path_obj
+                            status = "200"
+                        else:
+                            continue
                         
                         # Skip error pages and redirects to root
                         if status in ["403", "404", "500"]:
@@ -1150,7 +1164,7 @@ def scan_single_target(target, args, profile, creds_enabled, rate_limiter, logge
                 scan_state.mark_phase_complete('screenshots')
         
         # Generate comprehensive reports
-        from .report import generate_text_report, generate_json_report, generate_html_report
+        from .report import generate_text_report, generate_json_report, generate_html_report, generate_commands_html
         
         report_data = {
             "target": target,
@@ -1210,6 +1224,11 @@ def scan_single_target(target, args, profile, creds_enabled, rate_limiter, logge
         html_report_path = reports_dir / "report.html"
         generate_html_report(report_data, str(html_report_path))
         logger.info(f"HTML report saved: {html_report_path}")
+        
+        # Commands HTML report in REX_REPORTS folder
+        commands_html_path = reports_dir / "commands.html"
+        generate_commands_html(str(commands_html_path))
+        logger.info(f"Commands report saved: {commands_html_path}")
         
         # Mark scan as complete
         if scan_state:

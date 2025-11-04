@@ -4,6 +4,7 @@ from typing import Any, Dict
 import json
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from rex_scan.command_tracker import get_tracker
 
 
 def generate_text_report(data: Dict[str, Any], out_path: str) -> str:
@@ -153,5 +154,39 @@ def generate_html_report(data: Dict[str, Any], out_path: str, templates_dir: str
     env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=select_autoescape(["html", "xml"]))
     tpl = env.get_template("report.html.j2")
     html = tpl.render(data=data)
+    p.write_text(html)
+    return str(p)
+
+
+def generate_commands_html(out_path: str, templates_dir: str = None) -> str:
+    """
+    Generate an HTML report of all executed commands with raw output.
+    
+    Args:
+        out_path: Path to save the commands HTML report
+        templates_dir: Directory containing Jinja2 templates
+    
+    Returns:
+        Path to generated HTML file
+    """
+    p = Path(out_path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    
+    if templates_dir is None:
+        templates_dir = Path(__file__).parent / "templates"
+    
+    # Get command tracking data
+    tracker = get_tracker()
+    commands = tracker.get_all()
+    summary = tracker.summary()
+    
+    # Render template
+    env = Environment(
+        loader=FileSystemLoader(str(templates_dir)),
+        autoescape=select_autoescape(["html", "xml"])
+    )
+    tpl = env.get_template("commands.html.j2")
+    html = tpl.render(commands=commands, summary=summary)
+    
     p.write_text(html)
     return str(p)

@@ -148,7 +148,12 @@
     <div class="meta">
       <strong>Target:</strong> {{ data.target }}<br>
       <strong>Scan Time:</strong> {{ data.timestamp }}<br>
-      <strong>Total Hosts:</strong> {{ data.nmap.hosts|length }}
+      <strong>Total Hosts:</strong> {{ data.nmap.hosts|length }}<br>
+      <div style="margin-top: 10px;">
+        <a href="commands.html" style="display: inline-block; padding: 8px 16px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9em;">
+          📋 View Raw Commands & Output
+        </a>
+      </div>
     </div>
 
     {% if data.charts %}
@@ -429,23 +434,33 @@
 
     <!-- DNS Enumeration Section -->
     <h2>🌐 DNS Enumeration</h2>
-    {% if data.dns_results and data.dns_results|length > 0 %}
+    {% if data.dns_enumeration and data.dns_enumeration|length > 0 %}
       {% set total_subdomains = namespace(count=0) %}
-      {% for domain, dns_data in data.dns_results.items() %}
+      {% set methods_used = namespace(list=[]) %}
+      {% for domain, dns_data in data.dns_enumeration.items() %}
         {% if dns_data.subdomains %}
           {% set total_subdomains.count = total_subdomains.count + dns_data.subdomains|length %}
+        {% endif %}
+        {% if dns_data.method and dns_data.method not in methods_used.list %}
+          {% set _ = methods_used.list.append(dns_data.method) %}
         {% endif %}
       {% endfor %}
       
       <div class="meta">
         <p><strong>Status:</strong> <span style="color: #28a745;">✓ DNS enumeration completed</span></p>
-        <p><strong>Domains scanned:</strong> {{ data.dns_results|length }}</p>
+        <p><strong>Method:</strong> {{ methods_used.list|join(', ') if methods_used.list else 'dnspython' }}</p>
+        <p><strong>Domains scanned:</strong> {{ data.dns_enumeration|length }}</p>
         <p><strong>Subdomains discovered:</strong> {{ total_subdomains.count }}</p>
       </div>
       
-      {% for domain, dns_data in data.dns_results.items() %}
+      {% for domain, dns_data in data.dns_enumeration.items() %}
       <div class="host">
         <h3>Domain: {{ domain }}</h3>
+        {% if dns_data.method %}
+        <p style="font-size: 0.9em; color: #6c757d;">
+          <em>Enumeration method: <strong>{{ dns_data.method }}</strong></em>
+        </p>
+        {% endif %}
         
         {% if dns_data.subdomains and dns_data.subdomains|length > 0 %}
         <div style="margin-top: 15px;">
@@ -503,27 +518,37 @@
 
     <!-- Directory Enumeration Section -->
     <h2>📁 Directory & File Enumeration</h2>
-    {% if data.dir_results and data.dir_results|length > 0 %}
+    {% if data.directory_enumeration and data.directory_enumeration|length > 0 %}
       {% set total_paths = namespace(count=0) %}
-      {% for url, paths in data.dir_results.items() %}
-        {% if paths %}
-          {% set total_paths.count = total_paths.count + paths|length %}
+      {% set methods_used = namespace(list=[]) %}
+      {% for url, dir_data in data.directory_enumeration.items() %}
+        {% if dir_data.results %}
+          {% set total_paths.count = total_paths.count + dir_data.results|length %}
+        {% endif %}
+        {% if dir_data.method and dir_data.method not in methods_used.list %}
+          {% set _ = methods_used.list.append(dir_data.method) %}
         {% endif %}
       {% endfor %}
       
       <div class="meta">
         <p><strong>Status:</strong> <span style="color: #28a745;">✓ Directory enumeration completed</span></p>
-        <p><strong>URLs scanned:</strong> {{ data.dir_results|length }}</p>
+        <p><strong>Method:</strong> {{ methods_used.list|join(', ') if methods_used.list else 'gobuster' }}</p>
+        <p><strong>URLs scanned:</strong> {{ data.directory_enumeration|length }}</p>
         <p><strong>Paths/files discovered:</strong> {{ total_paths.count }}</p>
       </div>
       
-      {% for url, paths in data.dir_results.items() %}
+      {% for url, dir_data in data.directory_enumeration.items() %}
       <div class="host">
         <h3>Target: {{ url }}</h3>
+        {% if dir_data.method %}
+        <p style="font-size: 0.9em; color: #6c757d;">
+          <em>Enumeration method: <strong>{{ dir_data.method }}</strong></em>
+        </p>
+        {% endif %}
         
-        {% if paths and paths|length > 0 %}
+        {% if dir_data.results and dir_data.results|length > 0 %}
         <div style="margin-top: 15px;">
-          <strong>🔍 Discovered Paths ({{ paths|length }}):</strong>
+          <strong>🔍 Discovered Paths ({{ dir_data.results|length }}):</strong>
           <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
             <thead>
               <tr style="background: #667eea; color: white;">
@@ -533,7 +558,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for path in paths %}
+              {% for path in dir_data.results %}
               <tr style="border-bottom: 1px solid #e9ecef;">
                 <td style="padding: 8px; font-family: 'Courier New', monospace;">
                   <a href="{{ url }}{{ path.path }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ path.path }}</a>

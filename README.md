@@ -24,9 +24,10 @@ Built with modularity and extensibility in mind, REX SCAN integrates seamlessly 
 - **Advanced Web Analysis**: SSL/TLS analysis, security headers, CMS detection, technology fingerprinting
 
 ### Vulnerability Assessment
-- **CVE Correlation**: Automated CVE lookup based on detected services and versions
+- **CVE Correlation**: Automated CVE lookup via NIST NVD API based on detected services and versions
+- **CVSS Scoring**: Real-time CVSS v3.1/v2.0 scores from National Vulnerability Database
 - **Exploit Database Integration**: Searchsploit integration for exploit availability
-- **Vulnerability Scoring**: CVSS-based severity classification
+- **Severity Classification**: CRITICAL, HIGH, MEDIUM, LOW categorization with exploit verification
 - **Credential Testing**: Conservative testing for default credentials and anonymous access
 
 ### Automation & Reliability
@@ -38,30 +39,63 @@ Built with modularity and extensibility in mind, REX SCAN integrates seamlessly 
 ### Reporting
 - **Multi-Format Output**: Text, JSON, and HTML reports
 - **Interactive Dashboards**: Rich HTML reports with charts and visualizations
+- **Command Transparency**: Comprehensive tracking of all external commands executed (nmap, searchsploit, gobuster, dnsenum, etc.)
+- **Method Indicators**: Reports show which tool/method was used for each module (e.g., "Method: gobuster" vs "Method: python")
 - **Screenshot Capture**: Automated web service screenshot capture
 - **Scan Comparison**: Diff two scans to identify new vulnerabilities or changes
 
+### Command Tracking & Transparency
+
+REX SCAN tracks **every external command** executed during a scan:
+
+- **Comprehensive Logging**: All tools tracked (nmap, searchsploit, gobuster, dirb, dnsenum, ssh-audit, smbclient, rpcclient)
+- **Full Output Capture**: Complete stdout/stderr for each command
+- **Execution Metrics**: Command duration, exit codes, timestamps
+- **Security**: Passwords automatically masked in logged commands
+- **Separate Report**: Dedicated `commands.html` with all command details
+- **Module Status**: Main report clearly shows which modules ran and with what tools
+
+This transparency is crucial for:
+- Reproducing scans manually
+- Understanding tool behavior
+- Audit trails and documentation
+- Troubleshooting and debugging
+
 ## Tools Used
 
-REX SCAN integrates and orchestrates the following security tools:
+REX SCAN uses a **dual-tool architecture** with intelligent fallback - external tools are preferred for performance but Python fallbacks ensure core functionality always works.
 
-### Required
-- **nmap**: Network scanning and service detection
-- **Python 3.8+**: Core runtime environment
+### Required (Core)
+- **nmap**: Network scanning and service detection (REQUIRED - no fallback)
+- **Python 3.8+**: Core runtime environment (REQUIRED)
 
-### Optional (Enhanced Functionality)
-- **searchsploit** (exploit-db): Vulnerability and exploit lookup
-- **gobuster**: High-performance directory enumeration
-- **dig**: DNS enumeration and analysis
-- **Playwright**: Web service screenshot capture
+### Optional External Tools (Recommended)
+- **searchsploit** (exploit-db): Exploit database queries - highly recommended
+- **gobuster**: High-performance directory enumeration → falls back to Python requests
+- **dnsenum**: Advanced DNS enumeration → falls back to dnspython library
+- **dirb**: Alternative directory brute-forcing → falls back to Python requests
+- **ssh-audit**: SSH security auditing → falls back to banner grabbing
+- **smbclient/rpcclient**: SMB enumeration → limited fallback
+- **Playwright**: Web service screenshot capture (optional feature)
+
+### Python Fallbacks (Always Available)
+- **dnspython**: DNS queries and basic subdomain enumeration
+- **requests**: HTTP-based directory enumeration with wordlists
+- **Built-in socket**: SSH banner grabbing, basic service detection
+
+**Key Point**: REX SCAN works out-of-the-box with just Python and nmap. External tools enhance performance and capabilities but are not mandatory.
 
 ### Python Libraries
 - **dnspython**: DNS resolution and enumeration
-- **requests/httpx**: HTTP client for web enumeration
+- **requests/httpx**: HTTP client for web enumeration and NVD API queries
 - **Jinja2**: Report templating engine
 - **matplotlib/plotly**: Chart generation and visualization
 - **colorama**: Terminal output formatting
 - **tqdm**: Progress bars and status display
+
+### External APIs
+- **NIST NVD API**: Real-time CVE data and CVSS scoring (https://services.nvd.nist.gov/rest/json/cves/2.0)
+- **Cloudflare DNS-over-HTTPS**: Optional privacy-enhanced DNS queries
 
 ## Installation
 
@@ -93,31 +127,51 @@ cd rex-scan
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Install optional tools (recommended)
+# Install optional external tools (recommended for best performance)
 bash install_tools.sh
 
-# Install Playwright browsers for screenshots
+# Install Playwright browsers for screenshots (optional)
 playwright install chromium
 
 # Verify installation
 python -m rex_scan --help
 ```
 
+**Note**: REX SCAN works immediately after `pip install -r requirements.txt` with just nmap. The `install_tools.sh` script adds optional performance enhancements.
+
 ### Optional Tools Installation
 
-```bash
-# macOS
-brew install exploitdb gobuster bind
+REX SCAN works perfectly without these tools (Python fallbacks are used), but external tools provide better performance:
 
-# Ubuntu/Debian
-sudo apt-get install exploitdb gobuster dnsutils
+```bash
+# Automated installation (recommended)
+bash install_tools.sh
+
+# Manual installation by OS:
+# macOS
+brew install nmap exploitdb gobuster
+# Note: dnsenum/dirb not available on macOS - Python fallbacks work perfectly
+
+# Ubuntu/Debian (most tools available)
+sudo apt-get install nmap exploitdb gobuster dnsenum dirb
 
 # Fedora/RHEL
-sudo yum install exploitdb gobuster bind-utils
+sudo yum install nmap exploitdb gobuster
 ```
+
+**Tool Availability by OS:**
+| Tool | macOS | Linux | Fallback |
+|------|-------|-------|----------|
+| nmap | ✓ Homebrew | ✓ Package manager | None (required) |
+| searchsploit | ✓ Homebrew | ✓ Package manager | None (recommended) |
+| gobuster | ✓ Homebrew | ✓ Package manager | Python requests |
+| dnsenum | ✗ Not available | ✓ Package manager | dnspython |
+| dirb | ✗ Not available | ✓ Package manager | Python requests |
+| ssh-audit | ✗ Not in brew | ✗ Manual install | Banner grabbing |
+| smbclient | ✗ Not in brew | ✓ Usually pre-installed | Limited |
 
 ## Usage
 
@@ -259,26 +313,26 @@ Each scan creates a timestamped directory with organized output:
 │   ├── report.txt                  # Human-readable text report
 │   ├── report.json                 # Machine-parsable JSON output
 │   ├── report.html                 # Interactive HTML dashboard (open in browser)
+│   ├── commands.html               # Command transparency report (all executed commands)
 │   └── charts/                     # Visualization charts
 │       ├── port_distribution.png
-│       ├── service_breakdown.png
-│       └── vulnerability_severity.png
+│       ├── credential_success.png
+│       └── network_topology.html
 │
-├── INDIVIDUAL/                     # Raw tool outputs
+├── INDIVIDUAL/                     # Raw tool outputs and structured data
 │   ├── nmap.xml                    # Raw nmap XML output
 │   ├── nmap_parsed.json            # Structured nmap data
-│   ├── dns_enum.json               # DNS enumeration results
-│   ├── dir_enum.json               # Directory scan results
+│   ├── dns_enum.json               # DNS enumeration results (method tracked)
+│   ├── dir_enum.json               # Directory scan results (method tracked)
 │   ├── ssh_enum.json               # SSH analysis results
 │   ├── smb_enum.json               # SMB analysis results
 │   ├── advanced_web_enum.json      # Web analysis results
 │   ├── searchsploit.txt            # Exploit database results
 │   ├── vulnerabilities.json        # CVE correlations
-│   └── credentials.json            # Credential test results
-│
-└── SCREENSHOTS/                    # Web service screenshots
-    ├── http_192.168.1.100_80.png
-    └── https_192.168.1.100_443.png
+│   ├── credentials.json            # Credential test results
+│   └── screenshots/                # Web service screenshots
+│       ├── http_192.168.1.100_80.png
+│       └── https_192.168.1.100_443.png
 ```
 
 ### Viewing Results
@@ -287,7 +341,14 @@ Each scan creates a timestamped directory with organized output:
 ```bash
 # Open the interactive HTML report in your browser
 open ~/Desktop/rex_scan_*/REX_REPORTS/report.html
+
+# View command transparency report (all executed commands with raw output)
+open ~/Desktop/rex_scan_*/REX_REPORTS/commands.html
 ```
+
+The HTML reports now include:
+- **report.html**: Complete scan results with module status indicators showing which tools were used (e.g., "Method: dnspython", "Method: gobuster")
+- **commands.html**: Full transparency of every external command executed, with stdout/stderr, exit codes, and execution time
 
 **Text Report:**
 ```bash
@@ -389,13 +450,10 @@ REX SCAN is provided for educational and authorized security testing purposes on
 - **nmap** by Gordon Lyon (Fyodor) - The foundation of network scanning
 - **exploit-db** by Offensive Security - Vulnerability and exploit database
 - **gobuster** by OJ Reeves - High-performance directory enumeration
+- **dnsenum** - Advanced DNS enumeration capabilities
+- **dirb** - Web content scanner
 - The open-source security community for continued innovation
 
 ---
-
-**Version**: 1.0.1  
-**Status**: Production Ready  
-**Repository**: https://github.com/rexmirak/rex-scan  
-**Last Updated**: November 2025
 
 For questions, issues, or contributions, visit our [GitHub repository](https://github.com/rexmirak/rex-scan).

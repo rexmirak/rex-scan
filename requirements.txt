@@ -19,3 +19,10 @@ plotly>=5.18.0
 kaleido>=0.2.1
 pandas>=2.1.0
 
+# Note: External tools (optional, enhance performance):
+# - gobuster: High-performance directory enumeration (brew/apt install gobuster)
+# - dnsenum: Advanced DNS enumeration (apt install dnsenum, not on macOS brew)
+# - dirb: Alternative directory scanner (apt install dirb, not on macOS brew)
+# - searchsploit: Exploit database search (brew/apt install exploitdb)
+# Python fallbacks are used when these tools are unavailable
+

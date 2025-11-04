@@ -51,3 +51,4 @@ output_*/
 
 # Ignore scan output directories but not the source code
 !rex_scan/
+CHANGELOG.md

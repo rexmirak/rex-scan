@@ -1,7 +1,9 @@
 """Run nmap and handle output."""
 import subprocess
 import shlex
+import time
 from pathlib import Path
+from rex_scan.command_tracker import get_tracker
 
 
 def run_nmap(*, target: str, ports: str = "", timing: str = "T3", output_xml: str, verbose: bool = False, sudo_password: str = "", nmap_flags: str = ""):
@@ -38,9 +40,13 @@ def run_nmap(*, target: str, ports: str = "", timing: str = "T3", output_xml: st
     if sudo_password:
         cmd = ["sudo", "-S"] + cmd
     
+    tracker = get_tracker()
+    cmd_str = " ".join(cmd if not sudo_password else ["sudo"] + cmd[2:])
+    start_time = time.time()
+    
     # Run subprocess. If verbose, stream stdout/stderr to console so the user sees progress.
     if verbose:
-        print("[nmap] command:", " ".join(cmd if not sudo_password else ["sudo"] + cmd[2:]), flush=True)
+        print("[nmap] command:", cmd_str, flush=True)
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE if sudo_password else None,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         # Send password if using sudo
@@ -49,14 +55,41 @@ def run_nmap(*, target: str, ports: str = "", timing: str = "T3", output_xml: st
             proc.stdin.flush()
             proc.stdin.close()
         
+        # Collect output for tracking
+        output_lines = []
+        
         # stream with explicit flushing
         try:
             for line in proc.stdout:
                 print(line, end="", flush=True)
+                output_lines.append(line)
         except KeyboardInterrupt:
             proc.kill()
+            duration = time.time() - start_time
+            tracker.track(
+                tool="nmap",
+                command=cmd_str,
+                stdout="".join(output_lines),
+                stderr="Interrupted by user",
+                exit_code=-1,
+                duration=duration,
+                context=f"Scan of {target} (INTERRUPTED)"
+            )
             raise
         ret = proc.wait()
+        duration = time.time() - start_time
+        
+        # Track command
+        tracker.track(
+            tool="nmap",
+            command=cmd_str,
+            stdout="".join(output_lines),
+            stderr="" if ret == 0 else f"Exit code: {ret}",
+            exit_code=ret,
+            duration=duration,
+            context=f"Scan of {target}"
+        )
+        
         if ret != 0:
             raise RuntimeError(f"nmap failed (rc={ret})")
     else:
@@ -64,10 +97,36 @@ def run_nmap(*, target: str, ports: str = "", timing: str = "T3", output_xml: st
             proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, 
                                   stderr=subprocess.PIPE, text=True)
             stdout, stderr = proc.communicate(input=sudo_password + '\n')
+            duration = time.time() - start_time
+            
+            # Track command
+            tracker.track(
+                tool="nmap",
+                command=cmd_str,
+                stdout=stdout,
+                stderr=stderr,
+                exit_code=proc.returncode,
+                duration=duration,
+                context=f"Scan of {target}"
+            )
+            
             if proc.returncode != 0:
                 raise RuntimeError(f"nmap failed: {stderr.strip()}")
         else:
             proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            duration = time.time() - start_time
+            
+            # Track command
+            tracker.track(
+                tool="nmap",
+                command=cmd_str,
+                stdout=proc.stdout,
+                stderr=proc.stderr,
+                exit_code=proc.returncode,
+                duration=duration,
+                context=f"Scan of {target}"
+            )
+            
             if proc.returncode != 0:
                 raise RuntimeError(f"nmap failed: {proc.stderr.strip()}")
 

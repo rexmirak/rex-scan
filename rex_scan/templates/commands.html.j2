@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Commands & Output - REX SCAN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+        }
+        
+        .nav {
+            background: #161b22;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #30363d;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav a {
+            color: #58a6ff;
+            text-decoration: none;
+            margin-right: 2rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav a:hover {
+            color: #79c0ff;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .card h3 {
+            color: #8b949e;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        
+        .card.success .value { color: #3fb950; }
+        .card.failed .value { color: #f85149; }
+        
+        .filter-bar {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-bar label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+        
+        .filter-bar select, .filter-bar input {
+            background: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .command-block {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .command-header {
+            background: #21262d;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .command-header:hover {
+            background: #2d333b;
+        }
+        
+        .command-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .tool-badge {
+            background: #1f6feb;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-badge.success {
+            background: #238636;
+            color: white;
+        }
+        
+        .status-badge.failed {
+            background: #da3633;
+            color: white;
+        }
+        
+        .command-meta {
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+        
+        .command-body {
+            padding: 1.5rem;
+            display: none;
+        }
+        
+        .command-body.expanded {
+            display: block;
+        }
+        
+        .command-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .command-section h4 {
+            color: #58a6ff;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .command-text {
+            color: #79c0ff;
+        }
+        
+        .output-text {
+            color: #8b949e;
+            white-space: pre-wrap;
+        }
+        
+        .error-text {
+            color: #f85149;
+            white-space: pre-wrap;
+        }
+        
+        .context-text {
+            color: #f0883e;
+            font-style: italic;
+        }
+        
+        .expand-icon {
+            transition: transform 0.3s;
+        }
+        
+        .expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #8b949e;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Raw Commands & Output</h1>
+        <p>All executed commands with full stdout/stderr output for transparency and debugging</p>
+    </div>
+    
+    <div class="nav">
+        <a href="report.html">← Back to Main Report</a>
+        <a href="#summary">Summary</a>
+        <a href="#commands">Commands</a>
+    </div>
+    
+    <div class="container">
+        <div id="summary" class="summary-cards">
+            <div class="card">
+                <h3>Total Commands</h3>
+                <div class="value">{{ summary.total_commands }}</div>
+            </div>
+            <div class="card success">
+                <h3>Successful</h3>
+                <div class="value">{{ summary.successful }}</div>
+            </div>
+            <div class="card failed">
+                <h3>Failed</h3>
+                <div class="value">{{ summary.failed }}</div>
+            </div>
+            <div class="card">
+                <h3>Total Duration</h3>
+                <div class="value">{{ summary.total_duration_seconds }}s</div>
+            </div>
+        </div>
+        
+        <div class="filter-bar">
+            <label>Filter by tool:</label>
+            <select id="toolFilter" onchange="filterCommands()">
+                <option value="all">All Tools</option>
+                {% for tool, count in summary.tools_used.items() %}
+                <option value="{{ tool }}">{{ tool }} ({{ count }})</option>
+                {% endfor %}
+            </select>
+            
+            <label>Filter by status:</label>
+            <select id="statusFilter" onchange="filterCommands()">
+                <option value="all">All</option>
+                <option value="success">Success Only</option>
+                <option value="failed">Failed Only</option>
+            </select>
+            
+            <label>Search:</label>
+            <input type="text" id="searchInput" placeholder="Search commands..." oninput="filterCommands()">
+        </div>
+        
+        <div id="commands" class="commands-container">
+            {% if commands %}
+                {% for cmd in commands %}
+                <div class="command-block" data-tool="{{ cmd.tool }}" data-success="{{ cmd.success|lower }}">
+                    <div class="command-header" onclick="toggleCommand(this)">
+                        <div class="command-title">
+                            <span class="expand-icon">▶</span>
+                            <span class="tool-badge">{{ cmd.tool }}</span>
+                            <span class="status-badge {{ 'success' if cmd.success else 'failed' }}">
+                                {{ 'SUCCESS' if cmd.success else 'FAILED' }}
+                            </span>
+                            <span class="command-meta">{{ cmd.timestamp }} • {{ cmd.duration_seconds }}s</span>
+                        </div>
+                        <span class="command-meta">Exit Code: {{ cmd.exit_code }}</span>
+                    </div>
+                    <div class="command-body">
+                        {% if cmd.context %}
+                        <div class="command-section">
+                            <h4>Context</h4>
+                            <div class="code-block">
+                                <div class="context-text">{{ cmd.context }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="command-section">
+                            <h4>Command</h4>
+                            <div class="code-block">
+                                <div class="command-text">$ {{ cmd.command }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if cmd.stdout %}
+                        <div class="command-section">
+                            <h4>Standard Output</h4>
+                            <div class="code-block">
+                                <div class="output-text">{{ cmd.stdout }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if cmd.stderr %}
+                        <div class="command-section">
+                            <h4>Standard Error</h4>
+                            <div class="code-block">
+                                <div class="error-text">{{ cmd.stderr }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <h2>No commands executed</h2>
+                    <p>No external tools were used during this scan.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function toggleCommand(header) {
+            const body = header.nextElementSibling;
+            const icon = header.querySelector('.expand-icon');
+            body.classList.toggle('expanded');
+            header.classList.toggle('expanded');
+        }
+        
+        function filterCommands() {
+            const toolFilter = document.getElementById('toolFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            const blocks = document.querySelectorAll('.command-block');
+            let visibleCount = 0;
+            
+            blocks.forEach(block => {
+                const tool = block.dataset.tool;
+                const success = block.dataset.success;
+                const text = block.textContent.toLowerCase();
+                
+                let show = true;
+                
+                // Tool filter
+                if (toolFilter !== 'all' && tool !== toolFilter) {
+                    show = false;
+                }
+                
+                // Status filter
+                if (statusFilter === 'success' && success !== 'true') {
+                    show = false;
+                } else if (statusFilter === 'failed' && success !== 'false') {
+                    show = false;
+                }
+                
+                // Search filter
+                if (searchText && !text.includes(searchText)) {
+                    show = false;
+                }
+                
+                block.style.display = show ? 'block' : 'none';
+                if (show) visibleCount++;
+            });
+            
+            // Show no results message if nothing visible
+            const container = document.getElementById('commands');
+            const noResults = container.querySelector('.no-results');
+            if (visibleCount === 0 && !noResults) {
+                container.innerHTML = '<div class="no-results"><h2>No matching commands</h2><p>Try adjusting your filters.</p></div>';
+            } else if (visibleCount > 0 && noResults) {
+                location.reload();
+            }
+        }
+        
+        // Expand first command by default
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstCommand = document.querySelector('.command-header');
+            if (firstCommand) {
+                toggleCommand(firstCommand);
+            }
+        });
+    </script>
+</body>
+</html>
